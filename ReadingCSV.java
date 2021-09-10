@@ -1,4 +1,4 @@
-package src.firstlab;
+package src.firstlab.Java_OOP_lab1;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ReadingCSV{
-    public static void main(String[] args){
+    public static void main(String[] args) throws Exception{
         
         /* Input class */
 
@@ -20,32 +20,33 @@ public class ReadingCSV{
 
         /* Reading CSV */
 
-        Read csvReader = new Read(inputArgs.pathToCsv);
+        Read csvReader = new Read(inputArgs.pathToCsv, inputArgs.csvDelimiter);
 
-        String input = "";
-        try {
-            input = csvReader.readCsv();
-        } catch (Exception Ex) {
-            Ex.printStackTrace();
-        }
+        // String input = "";
+
+        String lineArray[] = csvReader.readCsv().toArray(new String[0]);
+
+        // try {
+        //     input = csvReader.readCsv();
+        // } catch (Exception Ex) {
+        //     Ex.printStackTrace();
+        // }
         
         /* Algorithm */
 
-        Divide divider = new Divide(input, inputArgs.csvDelimiter);
+        Divide divider = new Divide(lineArray, inputArgs.csvDelimiter);
 
-        Object[] arrayOfObjects = divider.getTokensLength();
-        String[] tokenArray = arrayOfObjects[0].;
-        int[] lengthArray = arrayOfObjects[1];
+        String dataTokens[] = divider.getTokens();
 
         /* Output */
 
-        Output outputResult = new Output(tokenArray, lengthArray, inputArgs.outDelimiter, inputArgs.pathToOutFile);
+        // Output outputResult = new Output(tokenArray, lengthArray, inputArgs.outDelimiter, inputArgs.pathToOutFile);
 
-        try {
-            outputResult.output();
-        } catch (Exception Ex) {
-            Ex.printStackTrace();
-        }
+        // try {
+        //     outputResult.output();
+        // } catch (Exception Ex) {
+        //     Ex.printStackTrace();
+        // }
     }
 }
 
@@ -92,99 +93,120 @@ class Read{
     // pathToCsv: String, path to file with CSV format.
     String pathToCsv;
 
+    // csvDelimiter: char, sign which seperates tokens in csv.
+    char csvDelimiter;
+
+    // tokenArray: list of strings, array of values in csv.
+    List<String> lineArray = new ArrayList<>();
+
     /* Constructor of Read class */
 
-    Read(String givenPathToCsv){
+    Read(String givenPathToCsv, char givenCsvDelimiter){
         pathToCsv = givenPathToCsv;
+        csvDelimiter = givenCsvDelimiter;
     }
 
     /* Gets text into string from given CSV file. */
-    String readCsv() throws Exception{
+    List<String> readCsv() throws Exception{
         BufferedReader csvReader = new BufferedReader(new FileReader(pathToCsv));
-        
-        String input = csvReader.lines().collect(Collectors.joining());
+
+        String row;
+        while ((row = csvReader.readLine()) != null) {
+            lineArray.add(row);
+            // do something with the data
+        }
+        // String input = csvReader.lines().collect(Collectors.joining());
         
         csvReader.close();
 
-        return input;
+        return lineArray;
     }
 }
 
 /* Class Divide */
 class Divide{
-    // input: String, text from CSV file.
-    String input;
-    // csvDelimiter: char, character as a delimiter in CSV file.
+    // input: list of strings, lines from CSV file.
+    String input[];
+    // csvDelimiter: char, char acter as a delimiter in CSV file.
     char csvDelimiter;
 
     /* Constructor of Divide class */
 
-    Divide(String givenInput, char givenCsvDelimiter){
+    Divide(String givenInput[], char givenCsvDelimiter){
         input = givenInput;
         csvDelimiter = givenCsvDelimiter;
     }
-
-    // tokenArray: list of tokens of CSV file.
-    List<String> tokenArray = new ArrayList<>();
-
+    
     // start: int, position of token to be added in tokenArray.
     int start = 0;
+    
     // inQuotes: bool, switches to the state where to append data in quotes.
     Boolean inQuotes = false;
-
+    
     /* Returns lenghts of values in CSV file.
-     * returns: int array, lenthgs of tokens.
-     */
-    Object[] getTokensLength(){
+    * returns: int array, lenthgs of tokens.
+    */
+    String[] getTokens(){
         // inputLength: int, length of CSV file.
-        int inputLength = input.length();
+        // int inputLength = input.length();
+        
+        // tokenArray: list of tokens of CSV file.
+        List<String> tokenArray = new ArrayList<>();
+        
+        // lineCount: int, count of lines in csv.
+        int lineCount = input.length;
+        
+        for (int currentLine = 0; currentLine < lineCount; currentLine++){
 
-        for (int current = 0; current < inputLength; current++) {
-            // We check entire inputted string from CSV.
+            for (int currentCharIndex = 0; currentCharIndex < input[currentLine].length(); currentCharIndex++){
 
-            // If we get a quote char - turn on/off quote state.
-            if (input.charAt(current) == '"' && inQuotes == false){
-                inQuotes = true;
-            }
-            try {
-                if (input.charAt(current) == '"' && input.charAt(current + 1) == csvDelimiter){
-                    inQuotes = false;
+                if (input[currentLine].charAt(currentCharIndex) == '"'){
+                    inQuotes = inQuotes ? false : true;
                 }
-            } catch (Exception Ex) {
-                inQuotes = false;
-            }
 
-            if (input.charAt(current) == csvDelimiter && inQuotes == false){
-                // Simple case with no quotes.
-                tokenArray.add(input.substring(start, current));
-                // Move token sample.
-                start = current + 1;
+                if (input[currentLine].charAt(currentCharIndex) == csvDelimiter && inQuotes == false){
+                    // Simple case with no quotes.
+                    tokenArray.add(input[currentLine].substring(start, currentCharIndex));
+                    // Move token sample.
+                    start = currentCharIndex + 1;
+                }
             }
-        }
-        // Add the last token.
-        tokenArray.add(input.substring(start));
-    
-        // tokenCount: int, count of values in CSV file.
-        int tokenCount = tokenArray.size();
-        // lengthArray: int array, array of length of every token.
-        int lengthArray[] = new int[tokenCount];
-    
-        /* Count lengths of tokens */
-    
-        for (int i = 0; i < tokenCount; i++){
-            lengthArray[i] = tokenArray.get(i).length();
-            System.out.println(tokenArray.get(i));
-            if (tokenArray.get(i).charAt(0) == '"'){
-                // Remove quote chars in lengths.
-                lengthArray[i] -= 2;
-            }
+            // Add the last token in line.
+            tokenArray.add(input[currentLine].substring(start));
+            inQuotes = false;
+            start = 0;
         }
 
-        Object[] tokenArrayWithLengths = new Object[2];
-        tokenArrayWithLengths[0] = tokenArray;
-        tokenArrayWithLengths[1] = lengthArray;
+    
+        // // tokenCount: int, count of values in CSV file.
+        // int tokenCount = tokenArray.size();
 
-        return tokenArrayWithLengths;
+        // // lengthArray: int array, array of length of every token.
+        // int lengthArray[] = new int[tokenCount];
+    
+        // /* Count lengths of tokens */
+    
+        // for (int i = 0; i < tokenCount; i++){
+        //     lengthArray[i] = tokenArray.get(i).length();
+        //     System.out.println(tokenArray.get(i));
+        //     if (tokenArray.get(i).charAt(0) == '"'){
+        //         // Remove quote chars in lengths.
+        //         lengthArray[i] -= 2;
+        //     }
+        // }
+
+        // Object[] tokenArrayWithLengths = new Object[2];
+        // tokenArrayWithLengths[0] = tokenArray;
+        // tokenArrayWithLengths[1] = lengthArray;
+
+        // return tokenArrayWithLengths;
+        // return new Object[]{tokenArray, lengthArray};
+        // String data[] = tokenArray.toArray(new String[0]);
+
+        for (String i : tokenArray){
+            System.out.println(i);
+        }
+        return tokenArray.toArray(String[]::new);
     }
 }
 
@@ -213,9 +235,9 @@ class Output{
     void output() throws Exception{
 
         // Get from int array - string.
-        String result = Arrays.stream(lengthArray)
-                .mapToObj(String::valueOf)
-                .collect(Collectors.joining(Character.toString(outDelimiter)));
+        // String result = Arrays.stream(lengthArray)
+        //         .mapToObj(String::valueOf)
+        //         .collect(Collectors.joining(Character.toString(outDelimiter)));
 
         /* Writing to the given file */
 
