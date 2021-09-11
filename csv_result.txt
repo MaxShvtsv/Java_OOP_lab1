@@ -1,1 +1,21 @@
-7+9+9+23+7
+abc + 3
+bac + 3
+"hi" + 2
+My + 2
+"name,is" + 7
+Max + 3
+"abc,1234" + 8
+q2! + 3
+"abc 123" + 7
+a + 1
+"abc" "123" + 9
+b + 1
+"Hel,lo" + 6
+abc "123" + 9
+world + 5
+aaaa + 4
+abc " " 123 + 11
+bbbbb + 5
+hi + 2
+"abc "" 123" + 10
+bye + 3
