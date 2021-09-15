@@ -9,7 +9,9 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ReadingCSV{
     public static void main(String[] args) throws Exception{
@@ -34,7 +36,7 @@ public class ReadingCSV{
         String tokensArray[] = divider.getTokens();
 
         // tokenLengths: array of int, array of lengths of divided tokens.
-        int tokenLengths[] = divider.getLengths();
+        int tokenLengths[] = divider.getLengths(tokensArray);
 
         /* Output */
 
@@ -137,6 +139,13 @@ class Divide{
     // tokenArray: list of tokens of CSV file.
     List<String> tokenArray = new ArrayList<>();
 
+    int[] moveQuotesPositions(int initialArray[], int startPos, int step){
+        for (int i = startPos; i < initialArray.length; i++){
+            initialArray[i] += step;
+        }
+        return initialArray;
+    }
+
     /* Returns lenghts of values in CSV file.
     * returns: int array, lenthgs of tokens.
     */
@@ -154,6 +163,9 @@ class Divide{
 
                 if (input[currentLine].charAt(currentCharIndex) == '\"' && inQuotes == false){
                     inQuotes = true;
+                    if (input[currentLine].substring(currentCharIndex + 1).contains("\"") == false){
+                        inQuotes = false;
+                    }
                 } else if ((input[currentLine].charAt(currentCharIndex) == '\"' && inQuotes == true)){
                     inQuotes = false;
                 }
@@ -176,12 +188,83 @@ class Divide{
             start = 0;
         }
 
-        return tokenArray.toArray(String[]::new);
+        // Put off brackets.
+
+        String tokenArrayMod[] = tokenArray.toArray(String[]::new);
+        int tokenCount = tokenArrayMod.length;
+
+        for (int i = 0; i < tokenCount; i++){
+            StringBuilder currentToken = new StringBuilder(tokenArrayMod[i]);
+            if (currentToken.indexOf("\"") != -1){
+                int quotesCount = currentToken.length() - currentToken.toString().replace("\"", "").length();
+                if (quotesCount == 1){
+                    continue;
+                }
+
+                int quotesIndexArray[] = new int[quotesCount + 1];
+                int quotesIndex = 0;
+
+                for (int currentCharIndex = 0; currentCharIndex < currentToken.length(); currentCharIndex++){
+                    if (currentToken.charAt(currentCharIndex) == '"'){
+                        quotesIndexArray[quotesIndex] = currentCharIndex;
+                        quotesIndex++;
+                    }
+                }
+                quotesIndexArray[quotesCount] = -1;
+
+                for (int quoteChar = 0; quoteChar < quotesCount; quoteChar++){
+                    if (quotesIndexArray[0] == 0){
+                        if (quotesIndexArray[1] == currentToken.length() - 1 && quotesCount == 2){
+                            // ,"abc 123", case
+                            currentToken.deleteCharAt(0);
+                            currentToken.deleteCharAt(quotesIndexArray[quoteChar + 1] - 1);
+                            quotesCount -= 2;
+                            break;
+                        } else if (quotesIndexArray[quotesCount - 1] == currentToken.length() - 1 && quotesCount > 2){
+                            // ,"abc "" 123", case
+                            // ,"abc " " 123", case
+                            Boolean isNear = false;
+                            for (int c = quoteChar; c < quotesCount; c++){
+                                if (quotesIndexArray[c] + 1 == quotesIndexArray[c + 1]){
+                                    isNear = true;
+                                    currentToken.deleteCharAt(quotesIndexArray[c]);
+                                    quotesIndexArray = moveQuotesPositions(quotesIndexArray, c, -1);
+                                }
+                            }
+
+                            currentToken.deleteCharAt(quotesIndexArray[quoteChar]);
+                            if (isNear == false){
+                                currentToken.deleteCharAt(quotesIndexArray[quoteChar + 1] - 1);
+                            }
+                            if (isNear == true){
+                                currentToken.deleteCharAt(quotesIndexArray[quotesCount - 1] - 1);
+                            }
+                            quotesIndexArray = moveQuotesPositions(quotesIndexArray, quoteChar, -2);
+                            break;
+                        }
+                    } else {
+                        if (quotesIndexArray[quoteChar + 1] == currentToken.length() && quotesCount == 2){
+                            // ,abc "123", case
+                            break;
+                        } else if(quotesIndexArray[quoteChar] + 1 == quotesIndexArray[quoteChar + 1]){
+                            // ,abc "" 123, case
+                            currentToken.deleteCharAt(quotesIndexArray[quoteChar]);
+                            quotesIndexArray = moveQuotesPositions(quotesIndexArray, quoteChar, -1);
+                            continue;
+                        }
+                    }
+                }
+
+                tokenArrayMod[i] = currentToken.toString();
+            }
+        }
+
+        return tokenArrayMod;
     }
     
-    int[] getLengths(){
+    int[] getLengths(String tokenArrayForLen[]){
         // tokenCount: int, count of values in CSV file.
-        int tokenCount = tokenArray.size();
+        int tokenCount = tokenArrayForLen.length;
 
         // lengthArray: int array, array of length of every token.
         int lengthArray[] = new int[tokenCount];
@@ -189,12 +272,7 @@ class Divide{
         /* Count lengths of tokens */
     
         for (int i = 0; i < tokenCount; i++){
-            lengthArray[i] = tokenArray.get(i).length();
-
-            if (tokenArray.get(i).charAt(0) == '"'){
-                // Remove quote chars in lengths.
-                lengthArray[i] -= 2;
-            }
+            lengthArray[i] = tokenArrayForLen[i].length();
         }
         return lengthArray;
     }
@@ -231,6 +309,16 @@ class Output{
         /* Writing to the given file */
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(pathToOutFile));
+
+        /* Write only lengths */
+        
+        // String result = Arrays.stream(lengthArray)
+        //         .mapToObj(String::valueOf)
+        //         .collect(Collectors.joining(Character.toString(outDelimiter)));
+
+        // writer.write(result);
+
+        /* Write with words. */
 
         for (int i = 0; i < lengthArray.length; i++){
             writer.write(tokenArray[i] + String.format(" %c ", outDelimiter) + lengthArray[i] + "\n");

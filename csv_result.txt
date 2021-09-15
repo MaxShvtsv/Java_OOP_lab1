@@ -1,21 +1,20 @@
-abc + 3
-bac + 3
-"hi" + 2
-My + 2
-"name,is" + 7
-Max + 3
-"abc,1234" + 8
-q2! + 3
-"abc 123" + 7
-a + 1
-"abc" "123" + 9
-b + 1
-"Hel,lo" + 6
+Java + 4
+abc 123 + 7
+yes + 3
+ + 0
 abc "123" + 9
+hello + 5
 world + 5
-aaaa + 4
-abc " " 123 + 11
-bbbbb + 5
-hi + 2
-"abc "" 123" + 10
-bye + 3
+abc "123" + 9
+with,comma + 10
+abc " 123 + 9
+abc " 123 + 9
+abc,123 + 7
+abc " def " 123 + 15
+abc " def " 123 + 15
+abc "def" "123" + 15
+abc,def,jgd + 11
+jaja + 4
+abc " haha + 10
+abc " haha + 10
+a + 1
